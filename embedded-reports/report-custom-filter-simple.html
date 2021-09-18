@@ -1,0 +1,44 @@
+<html>
+<head>
+  <title>Embedded report with a custom filter (simple dropdown) - SeekTable Examples</title>
+  <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-form navbar-left">
+      <div class="form-group">
+        <select id="filter_year" class="form-control">
+          <option value="">(all years)</option>
+          <option value="2005">2005</option>
+          <option value="2004">2004</option>
+          <option value="2003">2003</option>
+        </select>
+      </div>
+	  <a href="https://github.com/seektable/examples/blob/gh-pages/embedded-reports/report-custom-filter-simple.html" class="btn btn-default">Show Source code</a>
+    </div>
+  </div>
+</nav>
+
+<iframe id="embedded_report" border="0" frameborder="0" 
+    width="800"
+    height="600"
+    src="https://www.seektable.com/public/report/1b0509d283904b4995f6968bdd4793f7"></iframe>
+
+<script type="text/javascript">
+window.embeddedReportOriginalUrl = null;
+window.refreshEmbeddedReport = function() {
+  var iframe = document.getElementById('embedded_report');
+  if (!embeddedReportOriginalUrl)
+    embeddedReportOriginalUrl = iframe.getAttribute('src');
+  var reportParams = {};
+  reportParams['filter_year'] = document.getElementById('filter_year').value;
+  iframe.setAttribute('src', embeddedReportOriginalUrl + "?report_parameters="+JSON.stringify(reportParams))
+};
+
+document.getElementById('filter_year').onchange = refreshEmbeddedReport;
+</script>
+
+</body>
+</html>
