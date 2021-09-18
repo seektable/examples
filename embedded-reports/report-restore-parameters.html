@@ -1,0 +1,57 @@
+<html>
+<head>
+  <title>Embedded report restore user-entered parameters - SeekTable Examples</title>
+  <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="container-fluid">
+<br/>
+<div class="well">Try to change report parameters and reload the page: entered values will be restored.
+	<a href="https://github.com/seektable/examples/blob/gh-pages/embedded-reports/report-restore-parameters.html" class="btn btn-default">Show Source code</a>
+</div>
+
+<iframe id="embedded_report" name="embedded_report" border="0" frameborder="0" 
+    width="800"
+    height="600"
+    scrolling="no" style="overflow:hidden"      
+    src=""></iframe>
+</div>
+
+<script type="text/javascript">
+window.refreshEmbeddedReport = function() {
+  var reportParams = {};
+  reportParams['filter_year'] = document.getElementById('filter_year').value;
+  window.frames.embedded_report.postMessage( 
+	JSON.stringify( {"action":"refresh","args":[reportParams]} ), "*");
+};
+window.loadSavedParameters = function(reportId) {
+  var savedParams = localStorage.getItem('report_'+reportId);
+  if (savedParams) {
+    console.log('loaded='+savedParams);
+  	return JSON.parse(savedParams);
+  }
+  return {};
+};
+window.saveReportParameters = function(reportId, paramValues) {
+  localStorage.setItem('report_'+reportId, JSON.stringify(paramValues));
+};
+
+
+window.addEventListener("message", function (event) {
+  if (!event.data) return;
+  var msg = JSON.parse(event.data);
+	switch (msg.action) {
+    case "onReportParametersChanged":
+      console.log('save='+JSON.stringify(msg.result));
+      saveReportParameters("1b0509d283904b4995f6968bdd4793f7", msg.result);
+			break;
+  }
+});
+
+
+document.getElementById('embedded_report').src = "https://www.seektable.com/public/report/1b0509d283904b4995f6968bdd4793f7?parameter=filter_year,filter_country&parameter_change_notify=1&report_parameters="+encodeURIComponent(JSON.stringify(loadSavedParameters("1b0509d283904b4995f6968bdd4793f7")));
+</script>
+
+</body>
+</html>
