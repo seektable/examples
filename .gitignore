@@ -1,0 +1,10 @@
+data/*.db
+packages/
+bin/
+obj/
+*.user
+*.suo
+.vs
+*.lock.json
+*.nuget.targets
+*.bat
