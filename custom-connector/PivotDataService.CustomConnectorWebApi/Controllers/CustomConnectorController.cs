@@ -81,6 +81,9 @@ namespace PivotDataService.CustomConnectorWebApi.Controllers {
 			}
 			if (hasAggregates) {
 				selectSql.Append(" GROUP BY ");
+				// if DB supports "GROUP BY CUBE" AND cube config "HandleTotalsInResult" is true AND you want to have totals in pivot tables:
+				//if (query.Columns.Any(c=>c.Type==WebApiQueryColumn.TypeAggregate && c.Aggregate.Function=="FirstValue"))
+				//	selectSql.Append(" CUBE ");
 				selectSql.Append(String.Join(",", groupBySqlExprs));
 			}
 			if (orderBySqlExprs.Count>0) {
@@ -98,6 +101,23 @@ namespace PivotDataService.CustomConnectorWebApi.Controllers {
 			dbCmd.CommandText = selectSql.ToString();
 
 			_logger.LogInformation("Generated SQL: " + dbCmd.CommandText);
+
+			// response should be a JSON array of rows
+			// where each row is an array with values (values should go in the order that corresponds to query.Columns)
+			// For example:
+			// [
+			//   ["a", "b", 1, 1],
+			//   ["b", "b", 2, 5]
+			// ]
+ 
+			// IMPORTANT: custom connector's API can return sub-totals/grand-total explicitely if cube's config allows that ("HandleTotalsInResult" is true).
+			// This makes sense when query.Columns contain a "FirstValue" aggregate function --
+			// PivotDataService cannot calculate sub-totals for this kind of measures and if pivot table
+			// should display totals for "FirstValue" measure these values should provided by a custom connector.
+			// Rows with values for totals should have NULLs for appropriate Type=Field columns like that:
+			// ["a", null, 4, 10]
+			// (how totals are returned in result of GROUP BY CUBE).
+			// This also means that normal rows should NOT have NULLs in columns with Type=Field. 
 
 			return new QueryResult(dbCmd);
 
