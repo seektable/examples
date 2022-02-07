@@ -51,16 +51,18 @@ namespace PivotDataService.CustomConnectorWebApi.Controllers {
 						break;
 				}
 			}
-			// generate SQL WHERE by query.Filter that comes as NReco.Data relex condition (https://github.com/nreco/data/wiki/Relex)
-			// query.Filter is passed in 2 cases:
+			// generate SQL WHERE by query.FilterRelex that comes as NReco.Data relex condition (https://github.com/nreco/data/wiki/Relex)
+			// query.FilterRelex is passed in 2 cases:
+			// - if cube's config defines "FilterRelex" to convert report parameters into filtering conditoins
 			// - if report type is 'flat-table' and user enters something in report's "Filter"
-			// - if report type is 'pivot-table' and
-			//      either "RelexFilter" is used in report's configuration to apply report parameters into filtering conditions
-			//      or "PivotFilter.ApplyAsCondition" is enabled in the cube config and report's "Filter" is translated into query conditions
+			// - if report type is 'pivot-table' and "PivotFilter.ApplyAsCondition" is enabled in the cube config and report's "Filter" can be translated into data source-level conditions
 			string whereSql = null;
-			if (!String.IsNullOrWhiteSpace(query.Filter)) {
+			if (!String.IsNullOrWhiteSpace(query.FilterRelex)) {
+				// it is possible to handle filtering conditions in an alternative way:
+				// query.FilterJson contains conditions in the form of MongoDB JSON filter (https://docs.mongodb.com/manual/reference/operator/query/)
+				// it might be easier to parse this JSON instead of relex for non-.NET custom connector API implementations
 				var relexParser = new NReco.Data.Relex.RelexParser();
-				var filterCondition = relexParser.ParseCondition(query.Filter);
+				var filterCondition = relexParser.ParseCondition(query.FilterRelex);
 				var sqlBuilder = db.DbFactory.CreateSqlBuilder(dbCmd, null);
 				whereSql = sqlBuilder.BuildExpression(filterCondition);
 			}
@@ -79,7 +81,7 @@ namespace PivotDataService.CustomConnectorWebApi.Controllers {
 				selectSql.Append(" WHERE ");
 				selectSql.Append(whereSql);
 			}
-			if (hasAggregates) {
+			if (hasAggregates && groupBySqlExprs.Count>0) {
 				selectSql.Append(" GROUP BY ");
 				// if DB supports "GROUP BY CUBE" AND cube config "HandleTotalsInResult" is true AND you want to have totals in pivot tables:
 				//if (query.Columns.Any(c=>c.Type==WebApiQueryColumn.TypeAggregate && c.Aggregate.Function=="FirstValue"))
